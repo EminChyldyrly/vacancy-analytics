@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from contextlib import closing
 from pathlib import Path
 
 from . import analysis, db, hh_client, sample_data
@@ -10,11 +11,18 @@ from . import analysis, db, hh_client, sample_data
 
 def _cmd_demo(args: argparse.Namespace) -> int:
     path = Path(args.db)
-    if path.exists():
-        path.unlink()
-    conn = db.connect(path)
-    db.init_db(conn)
-    added = db.insert_vacancies(conn, sample_data.generate(n=args.n, seed=args.seed))
+    try:
+        path.touch(exist_ok=False)
+    except OSError as exc:
+        print(f"Выберите новый путь для демо-базы: {exc}", file=sys.stderr)
+        return 1
+    try:
+        with closing(db.connect(path)) as conn:
+            db.init_db(conn)
+            added = db.insert_vacancies(conn, sample_data.generate(n=args.n, seed=args.seed))
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
     print(f"Создана база {path} с {added} демо-вакансиями (данные синтетические).")
     return 0
 

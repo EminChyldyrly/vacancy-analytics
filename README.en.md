@@ -107,3 +107,5 @@ docs/              sample report and chart
 ## License
 
 MIT, see [LICENSE](LICENSE).
+
+Use a new `--db` path for each `demo` run. Existing databases are preserved.
